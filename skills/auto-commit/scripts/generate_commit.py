@@ -79,7 +79,8 @@ def analyze_changes(status: Dict[str, List[str]], diff: str) -> Dict[str, any]:
             'added': 0,
             'modified': 0,
             'deleted': 0
-        }
+        },
+        'diff_content': diff  # 保存 diff 内容供后续分析
     }
     
     # 统计操作类型
@@ -158,6 +159,7 @@ def generate_commit_message(analysis: Dict[str, any]) -> str:
     # 生成简短描述
     files = analysis['files']
     ops = analysis['operations']
+    diff_content = analysis.get('diff_content', '').lower()
     
     # 构建描述
     if len(files) == 1:
@@ -169,20 +171,72 @@ def generate_commit_message(analysis: Dict[str, any]) -> str:
         else:
             summary = f"更新 {filename}"
     else:
+        # 多文件时，尝试根据文件名、路径和 diff 内容推断功能
+        file_keywords = ' '.join(files).lower()
+        
+        # 分析 diff 内容获取更多上下文
+        diff_keywords = {
+            'improve': '改进', 'enhance': '增强', 'optimize': '优化',
+            'confirm': '确认', 'interactive': '交互式', 'validation': '验证',
+            'message': 'commit message', 'better': '更好',
+            'add.*confirm': '添加确认', 'add.*interaction': '添加交互'
+        }
+        
+        improvement_hint = ""
+        for keyword, hint in diff_keywords.items():
+            if re.search(keyword, diff_content):
+                improvement_hint = hint
+                break
+        
         if commit_type == 'feat':
-            summary = "实现新功能"
+            # 尝试根据文件名推断功能
+            if 'skill' in file_keywords or 'SKILL.md' in str(files):
+                if ops['added'] > ops['modified']:
+                    summary = "创建 auto-commit skill 实现自动化代码提交"
+                else:
+                    if improvement_hint:
+                        summary = f"改进 auto-commit skill 功能（{improvement_hint}）"
+                    else:
+                        summary = "增强 auto-commit skill 功能"
+            elif 'auth' in file_keywords or 'login' in file_keywords:
+                summary = "实现用户认证功能"
+            elif 'api' in file_keywords:
+                summary = "添加新的 API 接口"
+            elif 'ui' in file_keywords or 'component' in file_keywords:
+                summary = "添加新的 UI 组件"
+            else:
+                summary = "添加新功能模块"
         elif commit_type == 'fix':
-            summary = "修复问题"
+            if 'test' in file_keywords:
+                summary = "修复测试相关问题"
+            else:
+                summary = "修复功能缺陷"
         elif commit_type == 'refactor':
-            summary = "重构代码"
+            summary = "重构代码结构"
         elif commit_type == 'docs':
-            summary = "更新文档"
+            if 'readme' in file_keywords.lower():
+                summary = "更新 README 文档"
+            elif 'api' in file_keywords:
+                summary = "更新 API 文档"
+            elif 'skill' in file_keywords:
+                if improvement_hint:
+                    summary = f"改进 skill 文档（添加{improvement_hint}说明）"
+                else:
+                    summary = "更新 skill 文档"
+            else:
+                summary = "更新项目文档"
         elif commit_type == 'style':
             summary = "调整代码格式"
         elif commit_type == 'test':
-            summary = "更新测试"
+            summary = "添加或更新测试用例"
+        elif commit_type == 'chore':
+            # chore 类型也尝试提供更多上下文
+            if 'script' in file_keywords and improvement_hint:
+                summary = f"改进脚本功能（{improvement_hint}）"
+            else:
+                summary = "更新项目代码"
         else:
-            summary = "更新代码"
+            summary = "更新项目代码"
     
     # 构建详细说明
     details = []
@@ -254,4 +308,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
