@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<!--
+    Emergent Equilibrium | 涌现平衡
+    混沌中的秩序 - 通过约束混沌系统实现秩序的自然涌现
+    基于 algorithmic-art skill 模板
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergent Equilibrium | 涌现平衡</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Anthropic Brand Colors */
+        :root {
+            --anthropic-dark: #141413;
+            --anthropic-light: #faf9f5;
+            --anthropic-mid-gray: #b0aea5;
+            --anthropic-light-gray: #e8e6dc;
+            --anthropic-orange: #d97757;
+            --anthropic-blue: #6a9bcc;
+            --anthropic-green: #788c5d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--anthropic-light) 0%, #f5f3ee 100%);
+            min-height: 100vh;
+            color: var(--anthropic-dark);
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(20, 20, 19, 0.1);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar h1 {
+            font-family: 'Lora', serif;
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--anthropic-dark);
+            margin-bottom: 8px;
+        }
+
+        .sidebar .subtitle {
+            color: var(--anthropic-mid-gray);
+            font-size: 14px;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        /* Control Sections */
+        .control-section {
+            margin-bottom: 32px;
+        }
+
+        .control-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--anthropic-dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-section h3::before {
+            content: '•';
+            color: var(--anthropic-orange);
+            font-weight: bold;
+        }
+
+        /* Seed Controls */
+        .seed-input {
+            width: 100%;
+            background: var(--anthropic-light);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-bottom: 12px;
+            border: 1px solid var(--anthropic-light-gray);
+            text-align: center;
+        }
+
+        .seed-input:focus {
+            outline: none;
+            border-color: var(--anthropic-orange);
+            box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.1);
+            background: white;
+        }
+
+        .seed-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .regen-button {
+            margin-bottom: 0;
+        }
+
+        /* Parameter Controls */
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--anthropic-dark);
+            margin-bottom: 8px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 4px;
+            background: var(--anthropic-light-gray);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--anthropic-orange);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: #c86641;
+        }
+
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: var(--anthropic-orange);
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .value-display {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--anthropic-mid-gray);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        /* Color Pickers */
+        .color-group {
+            margin-bottom: 16px;
+        }
+
+        .color-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--anthropic-mid-gray);
+            margin-bottom: 4px;
+        }
+
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-picker-container input[type="color"] {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+
+        .color-value {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--anthropic-mid-gray);
+        }
+
+        /* Buttons */
+        .button {
+            background: var(--anthropic-orange);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .button:hover {
+            background: #c86641;
+            transform: translateY(-1px);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button.secondary {
+            background: var(--anthropic-blue);
+        }
+
+        .button.secondary:hover {
+            background: #5a8bb8;
+        }
+
+        .button.tertiary {
+            background: var(--anthropic-green);
+        }
+
+        .button.tertiary:hover {
+            background: #6b7b52;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .button-row .button {
+            flex: 1;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        #canvas-container {
+            width: 100%;
+            max-width: 1000px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(20, 20, 19, 0.1);
+            background: white;
+        }
+
+        #canvas-container canvas {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--anthropic-mid-gray);
+            padding: 100px;
+        }
+
+        /* Responsive - Stack on mobile */
+        @media (max-width: 600px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .canvas-area {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Control Sidebar -->
+        <div class="sidebar">
+            <!-- Headers -->
+            <h1>Emergent Equilibrium</h1>
+            <div class="subtitle">涌现平衡 — 混沌与秩序在约束力场中共舞，涌现出自组织的计算之美</div>
+
+            <!-- Seed Section (FIXED) -->
+            <div class="control-section">
+                <h3>Seed</h3>
+                <input type="number" id="seed-input" class="seed-input" value="42" onchange="updateSeed()">
+                <div class="seed-controls">
+                    <button class="button secondary" onclick="previousSeed()">← Prev</button>
+                    <button class="button secondary" onclick="nextSeed()">Next →</button>
+                </div>
+                <button class="button tertiary regen-button" onclick="randomSeedAndUpdate()">↻ Random</button>
+            </div>
+
+            <!-- Parameters Section (CUSTOMIZED) -->
+            <div class="control-section">
+                <h3>Parameters</h3>
+                
+                <!-- Particle Count -->
+                <div class="control-group">
+                    <label>粒子数量 (Particles)</label>
+                    <div class="slider-container">
+                        <input type="range" id="particleCount" min="500" max="5000" step="100" value="2000" oninput="updateParam('particleCount', this.value)">
+                        <span class="value-display" id="particleCount-value">2000</span>
+                    </div>
+                </div>
+
+                <!-- Chaos Intensity -->
+                <div class="control-group">
+                    <label>混沌强度 (Chaos)</label>
+                    <div class="slider-container">
+                        <input type="range" id="chaosIntensity" min="0.1" max="2.0" step="0.1" value="1.0" oninput="updateParam('chaosIntensity', this.value)">
+                        <span class="value-display" id="chaosIntensity-value">1.0</span>
+                    </div>
+                </div>
+
+                <!-- Order Strength (Attractor) -->
+                <div class="control-group">
+                    <label>秩序强度 (Order)</label>
+                    <div class="slider-container">
+                        <input type="range" id="orderStrength" min="0.0" max="1.0" step="0.05" value="0.3" oninput="updateParam('orderStrength', this.value)">
+                        <span class="value-display" id="orderStrength-value">0.3</span>
+                    </div>
+                </div>
+
+                <!-- Noise Scale -->
+                <div class="control-group">
+                    <label>噪声尺度 (Scale)</label>
+                    <div class="slider-container">
+                        <input type="range" id="noiseScale" min="0.002" max="0.015" step="0.001" value="0.006" oninput="updateParam('noiseScale', this.value)">
+                        <span class="value-display" id="noiseScale-value">0.006</span>
+                    </div>
+                </div>
+
+                <!-- Trail Opacity -->
+                <div class="control-group">
+                    <label>轨迹透明度 (Trails)</label>
+                    <div class="slider-container">
+                        <input type="range" id="trailOpacity" min="1" max="30" step="1" value="8" oninput="updateParam('trailOpacity', this.value)">
+                        <span class="value-display" id="trailOpacity-value">8</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colors Section -->
+            <div class="control-section">
+                <h3>Colors</h3>
+                
+                <!-- Chaos Color (Hot) -->
+                <div class="color-group">
+                    <label>混沌色 (高速粒子)</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="colorChaos" value="#d97757" onchange="updateColor('colorChaos', this.value)">
+                        <span class="color-value" id="colorChaos-value">#d97757</span>
+                    </div>
+                </div>
+
+                <!-- Order Color (Cool) -->
+                <div class="color-group">
+                    <label>秩序色 (低速粒子)</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="colorOrder" value="#1a2a3a" onchange="updateColor('colorOrder', this.value)">
+                        <span class="color-value" id="colorOrder-value">#1a2a3a</span>
+                    </div>
+                </div>
+
+                <!-- Mid Color -->
+                <div class="color-group">
+                    <label>过渡色 (中速粒子)</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="colorMid" value="#6a9bcc" onchange="updateColor('colorMid', this.value)">
+                        <span class="color-value" id="colorMid-value">#6a9bcc</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Section (FIXED) -->
+            <div class="control-section">
+                <h3>Actions</h3>
+                <div class="button-row" style="margin-bottom: 8px;">
+                    <button class="button" onclick="resetParameters()">Reset</button>
+                    <button class="button secondary" onclick="downloadImage()">Download</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Canvas Area -->
+        <div class="canvas-area">
+            <div id="canvas-container">
+                <div class="loading">正在初始化生成艺术...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════
+        // EMERGENT EQUILIBRIUM - 涌现平衡
+        // 混沌中的秩序：约束混沌系统 + 隐形吸引子
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let params = {
+            seed: 42,
+            particleCount: 2000,
+            chaosIntensity: 1.0,
+            orderStrength: 0.3,
+            noiseScale: 0.006,
+            trailOpacity: 8,
+            colorChaos: '#d97757',
+            colorOrder: '#1a2a3a',
+            colorMid: '#6a9bcc'
+        };
+
+        let defaultParams = JSON.parse(JSON.stringify(params));
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // CORE SYSTEM
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let particles = [];
+        let attractors = [];
+        let zOffset = 0;
+
+        function setup() {
+            let canvas = createCanvas(1200, 1200);
+            canvas.parent('canvas-container');
+            colorMode(RGB, 255);
+            
+            initializeSystem();
+            
+            document.querySelector('.loading').style.display = 'none';
+        }
+
+        function initializeSystem() {
+            randomSeed(params.seed);
+            noiseSeed(params.seed);
+            
+            particles = [];
+            attractors = [];
+            zOffset = 0;
+            
+            // 生成隐形吸引子（秩序的源头）
+            let numAttractors = floor(random(2, 5));
+            for (let i = 0; i < numAttractors; i++) {
+                attractors.push({
+                    x: random(width * 0.2, width * 0.8),
+                    y: random(height * 0.2, height * 0.8),
+                    strength: random(0.5, 1.5),
+                    radius: random(100, 300)
+                });
+            }
+            
+            // 初始化粒子
+            for (let i = 0; i < params.particleCount; i++) {
+                particles.push(new Particle());
+            }
+            
+            background(250, 249, 245);
+        }
+
+        function draw() {
+            // 轨迹淡化效果
+            noStroke();
+            fill(250, 249, 245, params.trailOpacity);
+            rect(0, 0, width, height);
+            
+            // 更新时间维度
+            zOffset += 0.002;
+            
+            // 更新并绘制所有粒子
+            for (let p of particles) {
+                p.update();
+                p.display();
+                p.checkEdges();
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // PARTICLE CLASS - 粒子系统
+        // ═══════════════════════════════════════════════════════════════════════
+
+        class Particle {
+            constructor() {
+                this.pos = createVector(random(width), random(height));
+                this.vel = createVector(0, 0);
+                this.acc = createVector(0, 0);
+                this.maxSpeed = random(1.5, 4);
+                this.prevPos = this.pos.copy();
+                this.life = random(0.5, 1);
+            }
+            
+            update() {
+                this.prevPos = this.pos.copy();
+                
+                // ===== 混沌力量：多重 Perlin 噪声场 =====
+                let noiseVal = noise(
+                    this.pos.x * params.noiseScale,
+                    this.pos.y * params.noiseScale,
+                    zOffset
+                );
+                
+                // 添加第二层噪声（更细的扰动）
+                let noiseVal2 = noise(
+                    this.pos.x * params.noiseScale * 3,
+                    this.pos.y * params.noiseScale * 3,
+                    zOffset * 2
+                );
+                
+                // 混合两层噪声
+                let angle = noiseVal * TWO_PI * 4 + noiseVal2 * PI;
+                
+                let chaosForce = createVector(cos(angle), sin(angle));
+                chaosForce.mult(params.chaosIntensity * 0.3);
+                
+                // ===== 秩序力量：吸引子引力场 =====
+                let orderForce = createVector(0, 0);
+                
+                for (let att of attractors) {
+                    let d = dist(this.pos.x, this.pos.y, att.x, att.y);
+                    
+                    if (d < att.radius * 2) {
+                        // 涡旋吸引：不是直线吸引，而是螺旋式
+                        let toAttractor = createVector(att.x - this.pos.x, att.y - this.pos.y);
+                        
+                        // 添加垂直分量形成涡旋
+                        let perpendicular = createVector(-toAttractor.y, toAttractor.x);
+                        perpendicular.normalize();
+                        
+                        // 距离越近，涡旋越强
+                        let strength = map(d, 0, att.radius * 2, att.strength, 0);
+                        strength = constrain(strength, 0, att.strength);
+                        
+                        // 混合径向和切向分量
+                        toAttractor.normalize();
+                        toAttractor.mult(strength * 0.3);
+                        perpendicular.mult(strength * 0.7);
+                        
+                        orderForce.add(toAttractor);
+                        orderForce.add(perpendicular);
+                    }
+                }
+                
+                orderForce.mult(params.orderStrength);
+                
+                // ===== 合成：混沌 + 秩序 =====
+                this.acc.add(chaosForce);
+                this.acc.add(orderForce);
+                
+                this.vel.add(this.acc);
+                this.vel.limit(this.maxSpeed);
+                this.pos.add(this.vel);
+                this.acc.mult(0);
+            }
+            
+            display() {
+                // 计算速度大小，用于颜色映射
+                let speed = this.vel.mag();
+                let speedRatio = map(speed, 0, this.maxSpeed, 0, 1);
+                
+                // 解析颜色
+                let chaosCol = hexToRgb(params.colorChaos);
+                let orderCol = hexToRgb(params.colorOrder);
+                let midCol = hexToRgb(params.colorMid);
+                
+                // 三色渐变：秩序 -> 过渡 -> 混沌
+                let r, g, b;
+                if (speedRatio < 0.5) {
+                    let t = speedRatio * 2;
+                    r = lerp(orderCol.r, midCol.r, t);
+                    g = lerp(orderCol.g, midCol.g, t);
+                    b = lerp(orderCol.b, midCol.b, t);
+                } else {
+                    let t = (speedRatio - 0.5) * 2;
+                    r = lerp(midCol.r, chaosCol.r, t);
+                    g = lerp(midCol.g, chaosCol.g, t);
+                    b = lerp(midCol.b, chaosCol.b, t);
+                }
+                
+                // 透明度基于速度
+                let alpha = map(speed, 0, this.maxSpeed, 30, 150);
+                
+                stroke(r, g, b, alpha);
+                strokeWeight(map(speed, 0, this.maxSpeed, 0.5, 2));
+                line(this.prevPos.x, this.prevPos.y, this.pos.x, this.pos.y);
+            }
+            
+            checkEdges() {
+                // 边界环绕
+                if (this.pos.x > width) {
+                    this.pos.x = 0;
+                    this.prevPos.x = 0;
+                }
+                if (this.pos.x < 0) {
+                    this.pos.x = width;
+                    this.prevPos.x = width;
+                }
+                if (this.pos.y > height) {
+                    this.pos.y = 0;
+                    this.prevPos.y = 0;
+                }
+                if (this.pos.y < 0) {
+                    this.pos.y = height;
+                    this.prevPos.y = height;
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // UTILITY FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function hexToRgb(hex) {
+            let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // UI CONTROL HANDLERS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateParam(paramName, value) {
+            params[paramName] = parseFloat(value);
+            document.getElementById(paramName + '-value').textContent = value;
+            
+            // 某些参数需要重新初始化
+            if (paramName === 'particleCount') {
+                initializeSystem();
+            }
+        }
+
+        function updateColor(colorId, value) {
+            params[colorId] = value;
+            document.getElementById(colorId + '-value').textContent = value;
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // SEED CONTROL FUNCTIONS (FIXED)
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateSeedDisplay() {
+            document.getElementById('seed-input').value = params.seed;
+        }
+
+        function updateSeed() {
+            let input = document.getElementById('seed-input');
+            let newSeed = parseInt(input.value);
+            if (newSeed && newSeed > 0) {
+                params.seed = newSeed;
+                initializeSystem();
+            } else {
+                updateSeedDisplay();
+            }
+        }
+
+        function previousSeed() {
+            params.seed = Math.max(1, params.seed - 1);
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function nextSeed() {
+            params.seed = params.seed + 1;
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function randomSeedAndUpdate() {
+            params.seed = Math.floor(Math.random() * 999999) + 1;
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function resetParameters() {
+            params = JSON.parse(JSON.stringify(defaultParams));
+            
+            // 更新所有 UI 元素
+            document.getElementById('particleCount').value = params.particleCount;
+            document.getElementById('particleCount-value').textContent = params.particleCount;
+            document.getElementById('chaosIntensity').value = params.chaosIntensity;
+            document.getElementById('chaosIntensity-value').textContent = params.chaosIntensity;
+            document.getElementById('orderStrength').value = params.orderStrength;
+            document.getElementById('orderStrength-value').textContent = params.orderStrength;
+            document.getElementById('noiseScale').value = params.noiseScale;
+            document.getElementById('noiseScale-value').textContent = params.noiseScale;
+            document.getElementById('trailOpacity').value = params.trailOpacity;
+            document.getElementById('trailOpacity-value').textContent = params.trailOpacity;
+            
+            document.getElementById('colorChaos').value = params.colorChaos;
+            document.getElementById('colorChaos-value').textContent = params.colorChaos;
+            document.getElementById('colorOrder').value = params.colorOrder;
+            document.getElementById('colorOrder-value').textContent = params.colorOrder;
+            document.getElementById('colorMid').value = params.colorMid;
+            document.getElementById('colorMid-value').textContent = params.colorMid;
+            
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function downloadImage() {
+            saveCanvas('emergent-equilibrium-' + params.seed, 'png');
+        }
+
+        // Initialize UI on load
+        window.addEventListener('load', function() {
+            updateSeedDisplay();
+        });
+    </script>
+</body>
+</html>
+
