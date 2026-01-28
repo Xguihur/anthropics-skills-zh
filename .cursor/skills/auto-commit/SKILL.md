@@ -19,7 +19,11 @@ python3 scripts/commit_and_push.py
 脚本会自动：
 - 检查 git 状态并暂存变更
 - 分析变更内容生成 commit message
+- **显示 message 并等待用户确认**
+- 用户可以选择：使用/取消/编辑 message
 - 执行 commit 和 push
+
+**重要**：默认会要求用户确认 message。如需跳过确认（AI 自动调用），使用 `--no-confirm` 参数
 
 ## 工作流程
 
@@ -51,6 +55,14 @@ python3 scripts/commit_and_push.py --no-push
 
 ```bash
 python3 scripts/generate_commit.py
+```
+
+### 跳过确认（自动化场景）
+
+如果在 AI 自动化场景下需要跳过确认：
+
+```bash
+python3 scripts/commit_and_push.py --no-confirm
 ```
 
 ## Commit Message 规范
@@ -135,6 +147,7 @@ python3 scripts/generate_commit.py
 - `-m, --message <msg>`: 自定义 commit message
 - `--no-push`: 只提交不推送
 - `--stage-all`: 自动暂存所有变更
+- `--no-confirm`: 跳过确认，直接提交（用于自动化）
 
 **使用**：
 ```bash
@@ -152,8 +165,9 @@ python3 scripts/commit_and_push.py --no-push
 1. 检查是否在 git 仓库中
 2. 检查是否有已暂存的变更，没有则自动暂存
 3. 生成或使用提供的 commit message
-4. 执行 git commit
-5. 如果未禁用，执行 git push
+4. **等待用户确认（可以 Y 确认、n 取消、e 编辑）**
+5. 执行 git commit
+6. 如果未禁用，执行 git push
 
 ## 错误处理
 

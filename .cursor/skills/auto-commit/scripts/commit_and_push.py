@@ -148,6 +148,11 @@ def main():
         action='store_true',
         help='自动暂存所有变更'
     )
+    parser.add_argument(
+        '--no-confirm',
+        action='store_true',
+        help='跳过确认，直接提交（用于自动化脚本）'
+    )
     
     args = parser.parse_args()
     
@@ -174,6 +179,31 @@ def main():
         print("\n正在分析变更并生成 commit message...")
         commit_message = generate_commit_message()
         print(f"\n生成的 commit message:\n{commit_message}\n")
+        
+        # 交互式确认（除非指定了 --no-confirm）
+        if not args.no_confirm:
+            try:
+                confirm = input("是否使用此 commit message？(Y/n/e-编辑): ").strip().lower()
+                
+                if confirm == 'n':
+                    print("\n已取消提交")
+                    return 0
+                elif confirm == 'e' or confirm == 'edit':
+                    print("\n请输入新的 commit message（可多行，输入空行结束）：")
+                    lines = []
+                    while True:
+                        line = input()
+                        if not line:
+                            break
+                        lines.append(line)
+                    if lines:
+                        commit_message = '\n'.join(lines)
+                        print(f"\n使用自定义 commit message:\n{commit_message}\n")
+                    else:
+                        print("\n未输入内容，使用原 message")
+            except (EOFError, KeyboardInterrupt):
+                print("\n\n已取消提交")
+                return 0
     
     # 提交变更
     if not commit_changes(commit_message):
