@@ -148,11 +148,26 @@ def analyze_changes(status: Dict[str, List[str]], diff: str) -> Dict[str, any]:
 def generate_commit_message(analysis: Dict[str, any]) -> str:
     """根据分析结果生成 commit message"""
     
+    # Gitmoji 映射表
+    GITMOJI_MAP = {
+        'feat': '✨',      # 新功能
+        'fix': '🐛',       # 修复 Bug
+        'docs': '📝',      # 文档修改
+        'style': '🎨',     # 代码格式/结构改进
+        'refactor': '♻️',  # 重构
+        'perf': '⚡️',     # 性能优化
+        'test': '✅',      # 测试用例
+        'chore': '🔧',     # 配置/构建工具变更
+        'deploy': '🚀',    # 部署/发布
+        'ui': '💄',        # 更新 UI/样式文件
+    }
+    
     # 构建 commit 类型和作用域
     commit_type = analysis['type']
     scope = analysis['scope']
+    emoji = GITMOJI_MAP.get(commit_type, '🔧')
     
-    type_line = f"{commit_type}"
+    type_line = f"{emoji} {commit_type}"
     if scope:
         type_line += f"({scope})"
     
